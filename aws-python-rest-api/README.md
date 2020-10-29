@@ -28,7 +28,7 @@ serverless config credentials --provider aws --key <YOUR_AWS_ACCESS_KEY> --secre
 serverless deploy --aws-profile my-demo-profile
 ```
 
-**Invoke the function locally.**
+**Invoke the function locally**
 
 ```
 serverless invoke local --function hello
