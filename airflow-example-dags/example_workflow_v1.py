@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
+from utils.dag_notification import send_dag_failed_notification
 
 DAG_NAME = "example_workflow_v1"
 
@@ -16,7 +17,7 @@ default_args = {
     "email_on_retry": False,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
-    # "on_failure_callback": some_function,
+    "on_failure_callback": send_dag_failed_notification,
 }
 
 default_config = {
@@ -57,12 +58,16 @@ with DAG(DAG_NAME,
 
     # your SlackOperator
     notify_slack_de_team = DummyOperator(
-        task_id="notify_slack_de_team"
+        task_id="notify_slack_de_team",
+        slack_conn_id="de_slack_conn",
+        message="example_workflow: Success, N rows was ingested"
     )
 
     # your SlackOperator
     notify_slack_ds_team = DummyOperator(
-        task_id="notify_slack_ds_team"
+        task_id="notify_slack_ds_team",
+        slack_conn_id="ds_slack_conn",
+        message="example_workflow: Success, data is available at X"
     )
 
     end_task = DummyOperator(
@@ -72,4 +77,3 @@ with DAG(DAG_NAME,
     # build task association here
     start_task >> ingest_data_task >> clean_data_task
     clean_data_task >> [notify_slack_de_team, notify_slack_ds_team] >> end_task
-
