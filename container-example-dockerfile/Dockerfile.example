@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:experimental
+
+FROM python:3.7-slim-buster
+
+WORKDIR /usr/src/app
+
+# install LightGBM https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#id23
+RUN apt-get update
+# install LightGBM's dependencies
+# CMake
+RUN apt-get install -y build-essential gcc && \
+    pip install --no-cache-dir cmake && \
+    mkdir -p /usr/share/man/man1mkdir -p /usr/share/man/man1
+# SWIG
+RUN apt-get install -y swig
+# Java
+RUN apt-get install -y openjdk-11-jdk && \
+    export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/"
+# Git
+RUN apt-get install -y git
+# install LightGBM
+
+RUN git clone --recursive https://github.com/microsoft/LightGBM ; cd LightGBM && \
+    mkdir build ; cd build && \
+    export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64/" && \
+    cmake -DUSE_SWIG=ON --DCMAKE_CXX_FLAGS="-I/usr/lib/jvm/java-11-openjdk-amd64/include -I/usr/lib/jvm/java-11-openjdk-amd64/include/linux"  .. && \
+    make -j4
+# clean up
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    cd /usr/src/app && \
+    rm -rf /usr/src/app/LightGBM/
+
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-client
+# Need to explicitly disable Host Key Auth.
+RUN mkdir -p -m 0600 ~/.ssh && echo "Host *\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
+
+# Copy your python dependency & pip install them
+COPY ./requirements.txt .
+RUN --mount=type=ssh pip install --no-cache-dir -r requirements.txt
+
+# Copy your code into the container
+ADD ./my-modelling ./my-modelling
+ADD ./sql ./sql
+ADD ./credentials ./credentials
+ADD ./entrypoint.sh .
+
+# Setting environment variables
+ENV GOOGLE_APPLICATION_CREDENTIALS /usr/src/app/credentials/my-gcp-credentials.json
+
+CMD [ "main", "--help" ]
+ENTRYPOINT ["./entrypoint.sh"]
