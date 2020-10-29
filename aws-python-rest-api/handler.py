@@ -12,24 +12,24 @@ def hello(event, context):
     }
     return _build_response(200, body)
  
-def _mock_db(org_id):
-    # mocking database repository
+# def _mock_db(org_id):
+#     # mocking database repository
 
-    if org_id == 1:
-        return "CTO"
-    else:
-        return "BOT"
+#     if org_id == 1:
+#         return "CTO"
+#     else:
+#         return "BOT"
     
-def get_org(event, context):
-    # get organization name from given id
-    org_id = event.get("pathParameters").get("org_id")
+# def get_org(event, context):
+#     # get organization name from given id
+#     org_id = event.get("pathParameters").get("org_id")
     
-    try:
-        org_id = int(org_id)
-        body = {
-            "organization": _mock_db(org_id=org_id)
-        }
-        return _build_response(200, body)
+#     try:
+#         org_id = int(org_id)
+#         body = {
+#             "organization": _mock_db(org_id=org_id)
+#         }
+#         return _build_response(200, body)
 
-    except ValueError as e:
-        return _build_response(400, {"error": "org_id must be integer"})
+#     except ValueError as e:
+#         return _build_response(400, {"error": "org_id must be integer"})
